@@ -27,6 +27,7 @@ class BookRequest(BaseModel):
     rating: int =Field(gt=0,lt=6) # b/w 1 and 5
     published_date: int=Field(gt=1990,lt=2030)
 
+    #example payload
     model_config={
         "json_schema_extra":{
             "example":{
@@ -47,27 +48,32 @@ BOOKS=[
     Book(5,'Book 5','Fifth book','Author 5',3,2000),
     Book(6,'Book 6','Sixth book','Author 6',3.7,2026)
     ]
+#read all books
 @app.get("/books",status_code=status.HTTP_200_OK)
 async def read_all_books():
     return BOOKS
 
+#create new book
 @app.post("/create-book", status_code=status.HTTP_201_CREATED)
 async def create_book(new_bookRequest: BookRequest):
     new_book=Book(**new_bookRequest.model_dump())
     b=find_book_id(new_book)
     BOOKS.append(b)
 
+#generate id (1 more than last)
 def find_book_id(book:Book):
     book.id=1 if len(BOOKS)==0 else BOOKS[-1].id+1
     return book
 
+#get book by id
 @app.get("/books/{book_id}", status_code=status.HTTP_200_OK)
 async def find_book_by_id(book_id:int =Path(gt=0)):
     for book in BOOKS:
         if(book.id==book_id):
             return book
     raise HTTPException(status_code=404, detail="Book Not Found!")
-        
+
+#get book by rating    
 @app.get("/books/",status_code=status.HTTP_200_OK)
 async def get_books_by_rating(rating: int = Query(gt=0,lt=6)):
     return_list=[]
@@ -76,6 +82,7 @@ async def get_books_by_rating(rating: int = Query(gt=0,lt=6)):
             return_list.append(book)
     return return_list
 
+#update book
 @app.put("/books/",status_code=status.HTTP_204_NO_CONTENT)
 async def update_book(book:BookRequest):
     is_Updated=False
@@ -86,7 +93,7 @@ async def update_book(book:BookRequest):
     if not is_Updated:
         raise HTTPException(status_code=404, detail="Not found!")
     
-
+#delete book
 @app.delete("/books/{book_id}",status_code=status.HTTP_204_NO_CONTENT)
 async def delete_book(book_id:int =Path(gt=0)):
     is_Deleted=False
@@ -98,7 +105,7 @@ async def delete_book(book_id:int =Path(gt=0)):
     if not is_Deleted:
         raise HTTPException(status_code=404,detail="Not Found!")
     
-
+#get book by published year
 @app.get("/books/publish/",status_code=status.HTTP_200_OK)
 async def get_books_by_publishedDate(year:int =Query(gt=1990,lt=2030)):
     book_list=[]
